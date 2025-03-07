@@ -1,9 +1,7 @@
 """
 Parsing losses from Oryx sourced html content
 """
-from time import sleep
 from typing import Optional
-from datetime import datetime
 
 from bs4 import BeautifulSoup
 from bs4.element import ResultSet
