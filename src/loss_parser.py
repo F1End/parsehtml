@@ -67,6 +67,7 @@ class OryxLossParser:
         if tag.name == "h3":
             new_category = tag.find("span", class_="mw-headline")
             if new_category:
+                new_category = new_category.get_text()
                 self._update_category(tag, new_category)
 
     def _update_category(self, tag, new_category: str):

@@ -123,14 +123,17 @@ class TestOrxyLossParser(TestCase):
     @patch('src.loss_parser.OryxLossParser._update_category')
     def test_parse_category(self, update_cat_mock):
         mock_tag = MagicMock()
-        found_category_name = "Some value"
 
         # Case 1: tag is h3 AND new category
         mock_tag.name = "h3"
-        mock_tag.find.return_value = found_category_name
+        tag_instance = MagicMock()
+        mock_tag.find.return_value = tag_instance
+        found_category_name = "Some value"
+        tag_instance.get_text.return_value = found_category_name
         self.testparser._parse_category(mock_tag)
         mock_tag.find.assert_called_with("span", class_="mw-headline")
         update_cat_mock.assert_called_with(mock_tag, found_category_name)
+        tag_instance.get_text.assert_called_with()
 
         mock_tag.reset_mock()
         update_cat_mock.reset_mock()
