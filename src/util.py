@@ -9,7 +9,6 @@ from argparse import ArgumentParser
 from bs4 import BeautifulSoup
 from bs4.element import ResultSet
 import pandas as pd
-import Be
 
 
 class Content(ABC):
