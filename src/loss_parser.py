@@ -17,7 +17,7 @@ class OryxLossParser:
         self.type_img_links = None
         self.errors = []
 
-    def parse_losses(self, html_content):
+    def parse_losses(self, html_content: str) -> list:
         all_losses = []
         soup = BeautifulSoup(html_content, "html.parser")
         tags = soup.find_all(["h3", "h2", "li"])
@@ -55,7 +55,7 @@ class OryxLossParser:
         self._parse_type(tag)
         self._add_losses(tag, losses_lst)
 
-    def _parse_category(self, tag):
+    def _parse_category(self, tag: ResultSet):
         """
         Loss category (e.g. "Tanks") is stored in h3/mw-headline.
         Some <h3> exist without headline, we want to ignore those.
@@ -68,19 +68,19 @@ class OryxLossParser:
                 new_category = new_category.get_text()
                 self._update_category(tag, new_category)
 
-    def _update_category(self, tag, new_category: str):
+    def _update_category(self, tag: ResultSet, new_category: str):
         self.category_counter += 1
         self.category_name = new_category
         self.category_summary = self._parse_category_summary(tag, new_category)
 
-    def _parse_category_summary(self, tag, new_category_name: str) -> str:
+    def _parse_category_summary(self, tag: ResultSet, new_category_name: str) -> str:
         """Getting the high level breakdown (destroyed, damaged, abandoned) for the category:
         We need what comes after the category name, and we are cutting off the brackets with +-1"""
         full_text = tag.get_text()
         summary = full_text[len(new_category_name) + 1: -1]
         return summary
 
-    def _parse_type(self, tag):
+    def _parse_type(self, tag: ResultSet):
         if self.category_counter > 0 and tag.name == "li":
             words = tag.get_text(strip=True).split(":")[0].split()
             self.type_ttl_count = self._parse_type_count(words)
@@ -100,19 +100,19 @@ class OryxLossParser:
             self.errors.append((e, type_text))
         return type_count
 
-    def _parse_type_images(self, tag) -> str:
+    def _parse_type_images(self, tag: ResultSet) -> str:
         img_tags = tag.find_all("img")
         img_links = [img["src"] for img in img_tags if "src" in img.attrs]
         if img_links:
             img_str = " ".join(img_links)
             return img_str
 
-    def _parse_loss_item(self, tag):
+    def _parse_loss_item(self, tag: ResultSet) -> (str, str):
         text = tag.get_text(strip=True)
         proof = tag.get("href")
         return text, proof
 
-    def _create_longrow(self, text, proof):
+    def _create_longrow(self, text: str, proof: str) -> dict:
         row = {}
         row["category_counter"] = self.category_counter
         row["category_name"] = self.category_name
@@ -125,7 +125,7 @@ class OryxLossParser:
         # print(row)
         return row
 
-    def _add_losses(self, tag, loss_list):
+    def _add_losses(self, tag: ResultSet, loss_list: list):
         if tag.name == "li" and self.category_counter > 0:
             loss_items = tag.find_all("a")
             for item_tag in loss_items:
