@@ -2,9 +2,13 @@
 Parsing losses from Oryx sourced html content
 """
 from typing import Optional
+import logging
 
 from bs4 import BeautifulSoup
 from bs4.element import ResultSet
+
+
+logger = logging.getLogger(__name__)
 
 
 class OryxLossParser:
@@ -16,6 +20,7 @@ class OryxLossParser:
         self.type_ttl_count = 0
         self.type_img_links = None
         self.errors = []
+        self.buffer = None
 
     def parse_losses(self, html_content: str) -> list:
         all_losses = []
@@ -110,7 +115,32 @@ class OryxLossParser:
     def _parse_loss_item(self, tag: ResultSet) -> (str, str):
         text = tag.get_text(strip=True)
         proof = tag.get("href")
-        return text, proof
+        text = self._merge_broken_losses(text)
+        if text:
+            return text, proof
+        else:
+            return ("skip", "skip")
+
+    def _merge_broken_losses(self, text: str) -> Optional[str]:
+        """
+        Some entries are not properly formed and get added in multiple places due to wrong html tag usage in source.
+        These are merged here into a single entry.
+        E.g. 152mm 2A65 Msta-B howitzer damaged with link https://postimg.cc/q6CYJkkd
+        :param text:
+        :return:
+        """
+        if ")" not in text and self.buffer is None:
+            self.buffer = text
+            return None
+        if self.buffer and ")" not in text:
+            self.buffer += text
+            return None
+        if self.buffer and (")") in text:
+            text = self.buffer + text
+            self.buffer = None
+            logger.debug(f"Returning merged text: {text}")
+            return text
+        return text
 
     def _create_longrow(self, text: str, proof: str) -> dict:
         row = {}
@@ -122,7 +152,6 @@ class OryxLossParser:
         row["type_img_links"] = self.type_img_links
         row["loss_item"] = text
         row["loss_proof"] = proof
-        # print(row)
         return row
 
     def _add_losses(self, tag: ResultSet, loss_list: list):
@@ -130,4 +159,7 @@ class OryxLossParser:
             loss_items = tag.find_all("a")
             for item_tag in loss_items:
                 item, link = self._parse_loss_item(item_tag)
-                loss_list.append(self._create_longrow(item, link))
+                if item != "skip" and "link" != "skip":
+                    loss_list.append(self._create_longrow(item, link))
+                else:
+                    logger.debug("Skipping entry")
