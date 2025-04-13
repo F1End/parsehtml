@@ -314,9 +314,12 @@ class TestOrxyLossParser(TestCase):
         returned_img = self.testparser._parse_type_images(tag)
         self.assertEqual(returned_img, expected)
 
-    def test__parse_loss_item(self):
+    @patch("src.loss_parser.OryxLossParser._merge_broken_losses")
+    def test__parse_loss_item(self, merge_broken_mock):
+        # Case 1: valid text value with both brackets ()
+        merge_broken_mock.return_value = "(Text value)"
         tag = MagicMock()
-        text_value, proof_value = "Text value", "Proof link"
+        text_value, proof_value = "(Text value)", "Proof link"
         tag.get_text.return_value = text_value
         tag.get.return_value = proof_value
 
@@ -324,6 +327,40 @@ class TestOrxyLossParser(TestCase):
         self.assertEqual(output, (text_value, proof_value))
         tag.get_text.assert_called_with(strip=True)
         tag.get.assert_called_with("href")
+        merge_broken_mock.assert_called_with("(Text value)")
+
+        # Case 2: Not valid test value
+        merge_broken_mock.return_value = None
+        tag = MagicMock()
+        text_value, proof_value = "(Text value", "Proof link"
+        tag.get_text.return_value = text_value
+        tag.get.return_value = proof_value
+
+        output = self.testparser._parse_loss_item(tag)
+        self.assertEqual(output, ("skip", "skip"))
+        tag.get_text.assert_called_with(strip=True)
+        tag.get.assert_called_with("href")
+        merge_broken_mock.assert_called_with("(Text value")
+
+    def test__merge_broken_losses(self):
+        # Case 1: Text broken into three tags
+        consecutive_pieces = ["(1 ", "and 2", " damaged)"]
+        response = []
+        expected_buffer = None
+        for piece in consecutive_pieces:
+            self.assertEqual(self.testparser.buffer, expected_buffer)
+            response.append(self.testparser._merge_broken_losses(piece))
+            expected_buffer = piece if not expected_buffer else expected_buffer + piece
+        self.assertEqual(self.testparser.buffer, None)
+        self.assertEqual(response[0], None)
+        self.assertEqual(response[1], None)
+        self.assertEqual(response[2], "(1 and 2 damaged)")
+
+        # Case 2: Text is not broken -> return same text
+        good_text = ("(1, destroyed)")
+        response = self.testparser._merge_broken_losses(good_text)
+        self.assertEqual(good_text, response)
+        self.assertEqual(self.testparser.buffer, None)
 
     def test__create_longrow(self):
         self.testparser.category_counter = 1
