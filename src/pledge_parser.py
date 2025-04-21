@@ -1,8 +1,6 @@
 """
-Parsing pledged and received weaponry from Oryx html content
+Parsing pledged and received weaponry from Oryx html content.
+
+Todo later (lower priority)
 """
 
-
-# class to parse pedges
-
-#
