@@ -126,29 +126,46 @@ class TestOrxyLossParser(TestCase):
 
         # Case 1: tag is h3 AND new category
         mock_tag.name = "h3"
-        tag_instance = MagicMock()
-        mock_tag.find.return_value = tag_instance
-        found_category_name = "Some value"
-        tag_instance.get_text.return_value = found_category_name
+        found_category_name = "Some vehicle (123, of which: captured: 123)"
+        mock_tag.get_text.return_value = "Some vehicle (123, of which: captured: 123)"
         self.testparser._parse_category(mock_tag)
-        mock_tag.find.assert_called_with("span", class_="mw-headline")
         update_cat_mock.assert_called_with(mock_tag, found_category_name)
-        tag_instance.get_text.assert_called_with()
+        mock_tag.get_text.assert_called_with()
 
         mock_tag.reset_mock()
         update_cat_mock.reset_mock()
 
         # Case 2: tag is h3 but NOT new category
         mock_tag.name = "h3"
-        mock_tag.find.return_value = None
+        mock_tag.get_text.return_value = "Some other header is here"
         self.testparser._parse_category(mock_tag)
-        mock_tag.find.assert_called_with("span", class_="mw-headline")
+        mock_tag.get_text.assert_called_with()
         update_cat_mock.assert_not_called()
 
         mock_tag.reset_mock()
         update_cat_mock.reset_mock()
 
-        # Case 3: tag is NOT h3
+        # Case 3: tag is h3 but NOT new category, but contains key text "of which"
+        mock_tag.name = "h3"
+        mock_tag.get_text.return_value = "Russia 12345, of which: destroyed 4321, etc"
+        self.testparser._parse_category(mock_tag)
+        mock_tag.get_text.assert_called_with()
+        update_cat_mock.assert_not_called()
+
+        mock_tag.reset_mock()
+        update_cat_mock.reset_mock()
+
+        # Case 4: tag is h3 but NOT new category, but contains key text bracket "("
+        mock_tag.name = "h3"
+        mock_tag.get_text.return_value = "Some header here with (brackerts) in it..."
+        self.testparser._parse_category(mock_tag)
+        mock_tag.get_text.assert_called_with()
+        update_cat_mock.assert_not_called()
+
+        mock_tag.reset_mock()
+        update_cat_mock.reset_mock()
+
+        # Case 5: tag is NOT h3
         mock_tag.name = "img"
         mock_tag.find.return_value = None
         self.testparser._parse_category(mock_tag)
@@ -159,30 +176,40 @@ class TestOrxyLossParser(TestCase):
         update_cat_mock.reset_mock()
 
     @patch('src.loss_parser.OryxLossParser._parse_category_summary')
-    def test__update_category(self, parse_cat_summ_mock):
+    @patch('src.loss_parser.OryxLossParser._parse_category_name')
+    def test__update_category(self, parse_cat_name_mock, parse_cat_summ_mock):
         tag = "Some tag"
         new_cat = "IFV"
         self.testparser.category_counter = 0
         self.testparser.category_name = "Tanks"
         summary_val = "Category summary values"
         parse_cat_summ_mock.return_value = summary_val
+        parse_cat_name_mock.return_value = new_cat
 
         self.testparser._update_category(tag, new_cat)
         self.assertEqual(self.testparser.category_counter, 1)
         self.assertEqual(self.testparser.category_name, new_cat)
         self.assertEqual(self.testparser.category_summary, summary_val)
-        parse_cat_summ_mock.assert_called_with(tag, new_cat)
+        parse_cat_summ_mock.assert_called_with(tag)
 
     def test__parse_category_summary(self):
         tag = MagicMock()
         mock_text = "IFVs:(5 destroyed, 10 damaged)"
         tag.get_text.return_value = mock_text
         new_cat_name = "IFVs:"
+        self.testparser.category_name = new_cat_name
         expected = "5 destroyed, 10 damaged"
 
-        summary = self.testparser._parse_category_summary(tag, new_cat_name)
+        summary = self.testparser._parse_category_summary(tag)
         self.assertEqual(summary, expected)
         tag.get_text.assert_called_with()
+
+    def test__parse_category_name(self):
+        full_text = """Radars And Communications Equipment 
+        (136, of which destroyed: 100, damaged: 21, abandoned: 1, captured: 14)"""
+        expected = "Radars And Communications Equipment"
+        parsed = self.testparser._parse_category_name(full_text)
+        self.assertEqual(expected, parsed)
 
     @patch('src.loss_parser.OryxLossParser._parse_type_count')
     @patch('src.loss_parser.OryxLossParser._parse_type_images')

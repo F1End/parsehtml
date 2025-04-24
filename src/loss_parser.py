@@ -3,6 +3,7 @@ Parsing losses from Oryx sourced html content
 """
 from typing import Optional
 import logging
+import re
 
 from bs4 import BeautifulSoup
 from bs4.element import ResultSet
@@ -44,7 +45,6 @@ class OryxLossParser:
 
     def _find_str_pos(self, tags: ResultSet, string: str, content: str) -> int:
         """
-
         :param tags: ResultSet type from bs4 (is a list actually)
         :param exclude_from_str:
         :param content:
@@ -68,22 +68,29 @@ class OryxLossParser:
         :return:
         """
         if tag.name == "h3":
-            new_category = tag.find("span", class_="mw-headline")
+            # new_category = tag.find("span", class_="mw-headline")
+            new_category = tag.get_text() if "of which" in tag.get_text()\
+                and "(" in tag.get_text()\
+                else None
+
             if new_category:
-                new_category = new_category.get_text()
                 self._update_category(tag, new_category)
 
     def _update_category(self, tag: ResultSet, new_category: str):
         self.category_counter += 1
-        self.category_name = new_category
-        self.category_summary = self._parse_category_summary(tag, new_category)
+        self.category_name = self._parse_category_name(new_category)
+        self.category_summary = self._parse_category_summary(tag)
 
-    def _parse_category_summary(self, tag: ResultSet, new_category_name: str) -> str:
-        """Getting the high level breakdown (destroyed, damaged, abandoned) for the category:
-        We need what comes after the category name, and we are cutting off the brackets with +-1"""
+    def _parse_category_name(self, category: str) -> str:
+        category = category[0: re.search(r'\(\d', category).start()].strip()
+        return category
+
+    def _parse_category_summary(self, tag: ResultSet) -> str:
+        """Getting the high level breakdown (destroyed, damaged, abandoned) for the category"""
         full_text = tag.get_text()
-        summary = full_text[len(new_category_name) + 1: -1]
-        return summary
+        summary = full_text[len(self.category_name): -1]
+        summary_cleaned = re.sub(r"[()]", "", summary).strip()
+        return summary_cleaned
 
     def _parse_type(self, tag: ResultSet):
         if self.category_counter > 0 and tag.name == "li":
