@@ -1,6 +1,7 @@
 """
 Helper functions/classes shared by the different parsers
 """
+
 from abc import ABC, abstractmethod
 from typing import Any, Self, Union, Optional
 from pathlib import Path
@@ -35,7 +36,9 @@ class HTMLFileContent(Content):
         self.soup = BeautifulSoup(self._content, "html.parser")
         return self
 
-    def truncate_content(self, exclude_from_str: str, tag_name: Optional[str] = None) -> Self:
+    def truncate_content(
+        self, exclude_from_str: str, tag_name: Optional[str] = None
+    ) -> Self:
         """
         :param exclude_from_str:
         :param tag_name:
@@ -68,6 +71,8 @@ class ParsedContent(Content):
 def parse_args() -> Namespace:
     parser = ArgumentParser(description="Moving html content into longrow csv file")
     parser.add_argument("--file", help="Path to file with html content", required=True)
-    parser.add_argument("--output_file", help="Name of output file (csv)", required=True)
+    parser.add_argument(
+        "--output_file", help="Name of output file (csv)", required=True
+    )
     arguments = parser.parse_args()
     return arguments

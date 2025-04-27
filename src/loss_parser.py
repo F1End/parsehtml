@@ -1,6 +1,7 @@
 """
 Parsing losses from Oryx sourced html content
 """
+
 from typing import Optional
 import logging
 import re
@@ -31,7 +32,9 @@ class OryxLossParser:
             self._parse_tag_data(tag, all_losses)
         return all_losses
 
-    def truncate_content(self, html_content, exclude_from_str: str, tag_name: Optional[str] = None) -> str:
+    def truncate_content(
+        self, html_content, exclude_from_str: str, tag_name: Optional[str] = None
+    ) -> str:
         """
         :param html_content:
         :param exclude_from_str:
@@ -69,9 +72,11 @@ class OryxLossParser:
         """
         if tag.name == "h3":
             # new_category = tag.find("span", class_="mw-headline")
-            new_category = tag.get_text() if "of which" in tag.get_text()\
-                and "(" in tag.get_text()\
+            new_category = (
+                tag.get_text()
+                if "of which" in tag.get_text() and "(" in tag.get_text()
                 else None
+            )
 
             if new_category:
                 self._update_category(tag, new_category)
@@ -82,13 +87,13 @@ class OryxLossParser:
         self.category_summary = self._parse_category_summary(tag)
 
     def _parse_category_name(self, category: str) -> str:
-        category = category[0: re.search(r'\(\d', category).start()].strip()
+        category = category[0 : re.search(r"\(\d", category).start()].strip()
         return category
 
     def _parse_category_summary(self, tag: ResultSet) -> str:
         """Getting the high level breakdown (destroyed, damaged, abandoned) for the category"""
         full_text = tag.get_text()
-        summary = full_text[len(self.category_name): -1]
+        summary = full_text[len(self.category_name) : -1]
         summary_cleaned = re.sub(r"[()]", "", summary).strip()
         return summary_cleaned
 
@@ -96,7 +101,9 @@ class OryxLossParser:
         if self.category_counter > 0 and tag.name == "li":
             words = tag.get_text(strip=True).split(":")[0].split()
             self.type_ttl_count = self._parse_type_count(words)
-            self.type_name = " ".join(words[1:])  # rest of the text is the vehicle type, sometimes contains space
+            self.type_name = " ".join(
+                words[1:]
+            )  # rest of the text is the vehicle type, sometimes contains space
             self.type_img_links = self._parse_type_images(tag)
 
     def _parse_type_count(self, type_text: list[str]) -> int:
@@ -106,7 +113,9 @@ class OryxLossParser:
         :return:
         """
         try:
-            type_count = int(type_text[0])  # text starts with ttl loss count for the particular vehicle
+            type_count = int(
+                type_text[0]
+            )  # text starts with ttl loss count for the particular vehicle
         except Exception as e:  # some entries have loss count missing
             type_count = 0
             self.errors.append((e, type_text))

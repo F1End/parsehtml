@@ -18,8 +18,8 @@ class TestHTMLFileContent(TestCase):
         content_mock.assert_called_with(some_source)
         self.assertEqual(test_instance.soup, None)
 
-    @patch('src.util.open')
-    @patch('src.util.BeautifulSoup')
+    @patch("src.util.open")
+    @patch("src.util.BeautifulSoup")
     def test_load(self, bs_mock, open_mock):
         file_mock = MagicMock()
         fake_html = "some html content"
@@ -31,7 +31,7 @@ class TestHTMLFileContent(TestCase):
         bs_mock.assert_called_with(fake_html, "html.parser")
         self.assertEqual(test_instance._content, fake_html)
 
-    @patch('src.util.HTMLFileContent._find_str_pos')
+    @patch("src.util.HTMLFileContent._find_str_pos")
     def test_truncate_content(self, find_str_mock):
         soup_mock = MagicMock()
         content_str = "Some html content"
@@ -49,8 +49,7 @@ class TestHTMLFileContent(TestCase):
         truncated = self.test_htmlfcont.truncate_content(exclude, tag_name="a")
         self.assertEqual(self.test_htmlfcont._content, content_str[:10])
         soup_mock.find_all.assert_called_with("a")
-        find_str_mock.assert_called_with(fake_tags,
-                                         exclude)
+        find_str_mock.assert_called_with(fake_tags, exclude)
 
         find_str_mock.reset_mock()
 
@@ -58,8 +57,7 @@ class TestHTMLFileContent(TestCase):
         truncated_2 = self.test_htmlfcont.truncate_content(exclude)
         self.assertEqual(self.test_htmlfcont._content, fake_content[:10])
         soup_mock.find_all.assert_called_with()
-        find_str_mock.assert_called_with(fake_tags,
-                                         exclude)
+        find_str_mock.assert_called_with(fake_tags, exclude)
 
     def test__find_str_pos(self):
         soup_mock = MagicMock()
@@ -106,7 +104,7 @@ class TestParsedContent(TestCase):
         test_instance = util.ParsedContent(some_source)
         content_mock.assert_called_with(some_source)
 
-    @patch('src.util.pd')
+    @patch("src.util.pd")
     def test_load(self, pandas_mock):
         fake_df = "some dataframe"
         pandas_mock.DataFrame.return_value = fake_df
@@ -115,7 +113,7 @@ class TestParsedContent(TestCase):
         pandas_mock.DataFrame.assert_called_with(some_source)
         self.assertEqual(test_instance._content, fake_df)
 
-    @patch('src.util.pd.DataFrame')
+    @patch("src.util.pd.DataFrame")
     def test_to_csv(self, df_mock):
         df_instance = MagicMock()
         df_mock.return_value = df_instance
@@ -130,30 +128,34 @@ class TestParsedContent(TestCase):
 class TestParseArgs(TestCase):
 
     # Case 1: both arguments provided
-    @patch.object(sys, 'argv', ['parsehtml', '--file', 'input.html', '--output_file', 'output.html'])
+    @patch.object(
+        sys,
+        "argv",
+        ["parsehtml", "--file", "input.html", "--output_file", "output.html"],
+    )
     def test_args_with_file_and_output_file(self):
         args = util.parse_args()
-        self.assertEqual(args.file, 'input.html')
-        self.assertEqual(args.output_file, 'output.html')
+        self.assertEqual(args.file, "input.html")
+        self.assertEqual(args.output_file, "output.html")
 
     # Case 2: only input file is provided
-    @patch.object(sys, 'argv', ['parsehtml', '--file', 'input.html'])
+    @patch.object(sys, "argv", ["parsehtml", "--file", "input.html"])
     def test_args_with_only_file(self):
         with self.assertRaises(SystemExit):
             util.parse_args()
 
     # Case 3: only output file is provided
-    @patch.object(sys, 'argv', ['parsehtml', '--output_file', 'output.html'])
+    @patch.object(sys, "argv", ["parsehtml", "--output_file", "output.html"])
     def test_args_with_only_output_file(self):
         with self.assertRaises(SystemExit):
             util.parse_args()
 
     # Case 4: No arguments provided
-    @patch.object(sys, 'argv', ['parsehtml'])
+    @patch.object(sys, "argv", ["parsehtml"])
     def test_args_with_no_arguments(self):
         with self.assertRaises(SystemExit):
             util.parse_args()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

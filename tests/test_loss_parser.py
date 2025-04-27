@@ -19,8 +19,8 @@ class TestOrxyLossParser(TestCase):
         self.assertEqual(test_oryxparser.type_img_links, None)
         self.assertEqual(test_oryxparser.errors, [])
 
-    @patch('src.loss_parser.BeautifulSoup')
-    @patch('src.loss_parser.OryxLossParser._parse_tag_data')
+    @patch("src.loss_parser.BeautifulSoup")
+    @patch("src.loss_parser.OryxLossParser._parse_tag_data")
     def test_parse_losses(self, mock_parse_tagdata, mock_bs):
         bs_instance = MagicMock()
         mock_bs.return_value = bs_instance
@@ -28,8 +28,11 @@ class TestOrxyLossParser(TestCase):
         bs_instance.find_all.return_value = fake_tags
         fake_content = "Some html content"
         exected_findall_call = ["h3", "h2", "li"]
-        expected_calls = [call(fake_tags[0], []), call(fake_tags[1], []),
-                          call(fake_tags[2], [])]
+        expected_calls = [
+            call(fake_tags[0], []),
+            call(fake_tags[1], []),
+            call(fake_tags[2], []),
+        ]
 
         # Case 1: Normal, tags returned
         result = self.testparser.parse_losses(fake_content)
@@ -50,8 +53,8 @@ class TestOrxyLossParser(TestCase):
         bs_instance.find_all.assert_called_with(exected_findall_call)
         mock_parse_tagdata.assert_not_called()
 
-    @patch('src.loss_parser.BeautifulSoup')
-    @patch('src.loss_parser.OryxLossParser._find_str_pos')
+    @patch("src.loss_parser.BeautifulSoup")
+    @patch("src.loss_parser.OryxLossParser._find_str_pos")
     def test_truncate_content(self, find_str_mock, mock_bs):
         bs_instance = MagicMock()
         mock_bs.return_value = bs_instance
@@ -65,27 +68,23 @@ class TestOrxyLossParser(TestCase):
 
         # Case 1: tag name is provided
         truncated = self.testparser.truncate_content(
-            fake_content, exclude, tag_name="a")
+            fake_content, exclude, tag_name="a"
+        )
         self.assertEqual(truncated, fake_content[:10])
         mock_bs.assert_called_with(fake_content, "html.parser")
         bs_instance.find_all.assert_called_with("a")
-        find_str_mock.assert_called_with(fake_tags,
-                                         exclude,
-                                         fake_content)
+        find_str_mock.assert_called_with(fake_tags, exclude, fake_content)
 
         find_str_mock.reset_mock()
         mock_bs.reset_mock()
         bs_instance.reset_mock()
 
         # Case 2: tag name NOT provided
-        truncated_2 = self.testparser.truncate_content(
-            fake_content, exclude)
+        truncated_2 = self.testparser.truncate_content(fake_content, exclude)
         self.assertEqual(truncated_2, fake_content[:10])
         mock_bs.assert_called_with(fake_content, "html.parser")
         bs_instance.find_all.assert_called_with()
-        find_str_mock.assert_called_with(fake_tags,
-                                         exclude,
-                                         fake_content)
+        find_str_mock.assert_called_with(fake_tags, exclude, fake_content)
 
     def test__find_str_pos(self):
         tag1, tag2, tag3 = MagicMock(), MagicMock(), MagicMock()
@@ -120,7 +119,7 @@ class TestOrxyLossParser(TestCase):
         tag2.__str__.assert_not_called()
         tag3.__str__.assert_not_called()
 
-    @patch('src.loss_parser.OryxLossParser._update_category')
+    @patch("src.loss_parser.OryxLossParser._update_category")
     def test_parse_category(self, update_cat_mock):
         mock_tag = MagicMock()
 
@@ -175,8 +174,8 @@ class TestOrxyLossParser(TestCase):
         mock_tag.reset_mock()
         update_cat_mock.reset_mock()
 
-    @patch('src.loss_parser.OryxLossParser._parse_category_summary')
-    @patch('src.loss_parser.OryxLossParser._parse_category_name')
+    @patch("src.loss_parser.OryxLossParser._parse_category_summary")
+    @patch("src.loss_parser.OryxLossParser._parse_category_name")
     def test__update_category(self, parse_cat_name_mock, parse_cat_summ_mock):
         tag = "Some tag"
         new_cat = "IFV"
@@ -211,8 +210,8 @@ class TestOrxyLossParser(TestCase):
         parsed = self.testparser._parse_category_name(full_text)
         self.assertEqual(expected, parsed)
 
-    @patch('src.loss_parser.OryxLossParser._parse_type_count')
-    @patch('src.loss_parser.OryxLossParser._parse_type_images')
+    @patch("src.loss_parser.OryxLossParser._parse_type_count")
+    @patch("src.loss_parser.OryxLossParser._parse_type_images")
     def test__parse_type(self, mock_type_img, mock_type_count):
         tag = MagicMock()
         text = "33 T-64BV: (blah, blah) "
@@ -384,7 +383,7 @@ class TestOrxyLossParser(TestCase):
         self.assertEqual(response[2], "(1 and 2 damaged)")
 
         # Case 2: Text is not broken -> return same text
-        good_text = ("(1, destroyed)")
+        good_text = "(1, destroyed)"
         response = self.testparser._merge_broken_losses(good_text)
         self.assertEqual(good_text, response)
         self.assertEqual(self.testparser.buffer, None)
@@ -398,36 +397,38 @@ class TestOrxyLossParser(TestCase):
         self.testparser.type_img_links = "some link here"
         item = "destoyed"
         proof = "img_link_here"
-        expected_dict = {"category_counter": self.testparser.category_counter,
-                         "category_name": self.testparser.category_name,
-                         "category_summary": self.testparser.category_summary,
-                         "type_name": self.testparser.type_name,
-                         "type_ttl_count": self.testparser.type_ttl_count,
-                         "type_img_links": self.testparser.type_img_links,
-                         "loss_item": item,
-                         "loss_proof": proof}
+        expected_dict = {
+            "category_counter": self.testparser.category_counter,
+            "category_name": self.testparser.category_name,
+            "category_summary": self.testparser.category_summary,
+            "type_name": self.testparser.type_name,
+            "type_ttl_count": self.testparser.type_ttl_count,
+            "type_img_links": self.testparser.type_img_links,
+            "loss_item": item,
+            "loss_proof": proof,
+        }
         result = self.testparser._create_longrow(item, proof)
         self.assertEqual(result, expected_dict)
 
-    @patch('src.loss_parser.OryxLossParser._parse_loss_item')
-    @patch('src.loss_parser.OryxLossParser._create_longrow')
+    @patch("src.loss_parser.OryxLossParser._parse_loss_item")
+    @patch("src.loss_parser.OryxLossParser._create_longrow")
     def test__self_add_losses(self, mock_longrow, mock_parse_loss):
         tag = MagicMock()
         item1, item2, item3 = ["item1", "item2", "item3"]
         items = [item1, item2, item3]
         tag.find_all.return_value = items
-        parse_return_vals = [("loss1", "link1"),
-                             ("loss2", "link2"),
-                             ("loss3", "link3")]
+        parse_return_vals = [("loss1", "link1"), ("loss2", "link2"), ("loss3", "link3")]
         mock_parse_loss.side_effect = parse_return_vals
         longrows = ["row1", "row2", "row3"]
         mock_longrow.side_effect = longrows
 
         # Case 1: Category found (counter > 0) and tag is "li"
         expected_parse_calls = [call(item1), call(item2), call(item3)]
-        expected_create_longrow_calls = [call(*parse_return_vals[0]),
-                                         call(*parse_return_vals[1]),
-                                         call(*parse_return_vals[2])]
+        expected_create_longrow_calls = [
+            call(*parse_return_vals[0]),
+            call(*parse_return_vals[1]),
+            call(*parse_return_vals[2]),
+        ]
         loss_list = []
         self.testparser.category_counter = 1
         tag.name = "li"
@@ -472,5 +473,5 @@ class TestOrxyLossParser(TestCase):
         mock_longrow.assert_not_called()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
