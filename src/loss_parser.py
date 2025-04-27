@@ -121,14 +121,14 @@ class OryxLossParser:
             self.errors.append((e, type_text))
         return type_count
 
-    def _parse_type_images(self, tag: ResultSet) -> str:
+    def _parse_type_images(self, tag: ResultSet) -> Optional[str]:
         img_tags = tag.find_all("img")
         img_links = [img["src"] for img in img_tags if "src" in img.attrs]
         if img_links:
             img_str = " ".join(img_links)
             return img_str
 
-    def _parse_loss_item(self, tag: ResultSet) -> (str, str):
+    def _parse_loss_item(self, tag: ResultSet) -> tuple[str, str]:
         text = tag.get_text(strip=True)
         proof = tag.get("href")
         text = self._merge_broken_losses(text)

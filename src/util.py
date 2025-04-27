@@ -15,7 +15,7 @@ import pandas as pd
 class Content(ABC):
     def __init__(self, source: Any):
         self._source = source
-        self._content = None
+        self._content: Optional[str] = None
 
     def __call__(self):
         return self._content
@@ -27,7 +27,7 @@ class Content(ABC):
 
 class HTMLFileContent(Content):
     def __init__(self, source: Union[str, Path]):
-        self.soup = None
+        self.soup: Optional[BeautifulSoup] = None
         super().__init__(source)
 
     def load(self) -> Self:
