@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Self, Union, Optional
 from pathlib import Path
 from argparse import ArgumentParser, Namespace
+import re
 
 from bs4 import BeautifulSoup
 from bs4.element import ResultSet
@@ -15,7 +16,7 @@ import pandas as pd
 class Content(ABC):
     def __init__(self, source: Any):
         self._source = source
-        self._content: Optional[str] = None
+        self._content: Optional[Union[str, pd.DataFrame]] = None
 
     def __call__(self):
         return self._content
@@ -57,14 +58,25 @@ class HTMLFileContent(Content):
 
 
 class ParsedContent(Content):
-    def __init__(self, source: list[dict]):
+    def __init__(self, source: Union[list[dict], str, Path]):
         super().__init__(source)
 
     def load(self) -> Self:
-        self._content = pd.DataFrame(self._source)
+        if isinstance(self._source, list):
+            self._content = pd.DataFrame(self._source)
+        elif isinstance(self._source, str) or isinstance(self._source, Path):
+            self._content = pd.read_csv(self._source)
+        else:
+            raise TypeError(f"ParsedContent class supports only str, path and [list[dict]] sequence"
+                            f" but received {type(self._source)}!")
         return self
 
-    def to_csv(self, output_file: Union[str, Path]):
+    def clean_content(self) -> Self:
+        invisible_pattern = r"[\t\u00A0\u2007\u202F\u200B-\u200D\uFEFF]"
+        self._content.replace(invisible_pattern, " ", inplace=True, regex=True)
+        return self
+
+    def to_csv(self, output_file: Union[str, Path]) -> None:
         self._content.to_csv(output_file)
 
 

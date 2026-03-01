@@ -1,6 +1,9 @@
 from unittest import TestCase, main
 from unittest.mock import MagicMock, patch, call
+from pathlib import Path
 import sys
+
+import pandas as pd
 
 from src import util
 
@@ -108,10 +111,42 @@ class TestParsedContent(TestCase):
     def test_load(self, pandas_mock):
         fake_df = "some dataframe"
         pandas_mock.DataFrame.return_value = fake_df
+        pandas_mock.read_csv.return_value = fake_df
+
+        # Case 1: content is list[dict] (passed in parsing workflow)
         some_source = [{"blah": "test"}]
         test_instance = util.ParsedContent(some_source).load()
         pandas_mock.DataFrame.assert_called_with(some_source)
         self.assertEqual(test_instance._content, fake_df)
+        pandas_mock.reset()
+
+        # Case 2: content is Path or str (reading in file directly)
+        path_file_source = Path("path", "to", "some.csv")
+        test_instance = util.ParsedContent(path_file_source).load()
+        pandas_mock.read_csv.assert_called_with(path_file_source)
+        self.assertEqual(test_instance._content, fake_df)
+        pandas_mock.reset()
+
+        # Case 3: content is str (reading in file directly)
+        str_ile_source = "path/to/some/file.csv"
+        test_instance = util.ParsedContent(str_ile_source).load()
+        pandas_mock.read_csv.assert_called_with(str_ile_source)
+        self.assertEqual(test_instance._content, fake_df)
+        pandas_mock.reset()
+
+        # Case 3: wrong input content
+        wrong_source = 12345
+        with self.assertRaises(TypeError) as context:
+            test_instance = util.ParsedContent(wrong_source).load()
+
+    @patch("src.util.pd")
+    def test_clean_content(self, pandas_mock):
+        some_source = [{"blah": "test\u00A0"}]
+        test_df = pd.DataFrame(some_source)
+        pandas_mock.DataFrame.return_value = test_df
+        test_instance = util.ParsedContent(some_source).load().clean_content()
+        expected = pd.DataFrame([{"blah": "test "}])
+        pd.testing.assert_frame_equal(test_instance._content, expected)
 
     @patch("src.util.pd.DataFrame")
     def test_to_csv(self, df_mock):

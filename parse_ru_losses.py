@@ -15,4 +15,4 @@ if __name__ == "__main__":
     )
     content = util.HTMLFileContent(args.file).load().truncate_content(limit, limit_tag)
     ukr_losses = loss_parser.OryxLossParser().parse_losses(content())
-    util.ParsedContent(ukr_losses).load().to_csv(args.output_file)
+    util.ParsedContent(ukr_losses).load().clean_content().to_csv(args.output_file)
