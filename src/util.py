@@ -52,11 +52,8 @@ class HTMLFileContent(Content):
 
     def _find_str_pos(self, tags: ResultSet, string: str) -> int:
         for tag in tags:
-            # print(f"Current tag: {tag}")
             if string in tag.get_text():
                 value = str(self.soup).find(str(tag))
-                print(f"#String found: {value}")
-                print(tag)
                 return value
         raise Exception(f"String '{string}' not found in content!")
 

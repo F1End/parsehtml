@@ -81,7 +81,7 @@ class TestHTMLFileContent(TestCase):
         tag1.get_text.assert_called_once()
         tag2.get_text.assert_called_once()
         tag3.get_text.assert_not_called()
-        tag2.__str__.assert_any_call()
+        tag2.__str__.assert_called_once()
 
         tag1.reset_mock()
         tag2.reset_mock()
