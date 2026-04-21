@@ -81,7 +81,7 @@ class TestHTMLFileContent(TestCase):
         tag1.get_text.assert_called_once()
         tag2.get_text.assert_called_once()
         tag3.get_text.assert_not_called()
-        tag2.__str__.assert_called_once()
+        tag2.__str__.assert_any_call()
 
         tag1.reset_mock()
         tag2.reset_mock()
@@ -146,6 +146,15 @@ class TestParsedContent(TestCase):
         pandas_mock.DataFrame.return_value = test_df
         test_instance = util.ParsedContent(some_source).load().clean_content()
         expected = pd.DataFrame([{"blah": "test "}])
+        pd.testing.assert_frame_equal(test_instance._content, expected)
+
+    @patch("src.util.pd")
+    def test_strip_archive_url(self, pandas_mock):
+        some_source = [{"colnamehere": "https://web.archive.org/web/20220424191550/https://postimg.cc/G9jSKh34"}]
+        test_df = pd.DataFrame(some_source)
+        expected = pd.DataFrame([{"colnamehere": "https://postimg.cc/G9jSKh34"}])
+        pandas_mock.DataFrame.return_value = test_df
+        test_instance = util.ParsedContent(some_source).load().strip_archive_url()
         pd.testing.assert_frame_equal(test_instance._content, expected)
 
     @patch("src.util.pd.DataFrame")

@@ -52,8 +52,12 @@ class HTMLFileContent(Content):
 
     def _find_str_pos(self, tags: ResultSet, string: str) -> int:
         for tag in tags:
+            # print(f"Current tag: {tag}")
             if string in tag.get_text():
-                return str(self.soup).find(str(tag))
+                value = str(self.soup).find(str(tag))
+                print(f"#String found: {value}")
+                print(tag)
+                return value
         raise Exception(f"String '{string}' not found in content!")
 
 
@@ -74,6 +78,11 @@ class ParsedContent(Content):
     def clean_content(self) -> Self:
         invisible_pattern = r"[\t\u00A0\u2007\u202F\u200B-\u200D\uFEFF]"
         self._content.replace(invisible_pattern, " ", inplace=True, regex=True)
+        return self
+
+    def strip_archive_url(self) -> Self:
+        archive_pattern = r"https?://web\.archive\.org/web/\d+[^/]*/(https?://[^\s\"'>]+)"
+        self._content.replace(archive_pattern, r"\1", inplace=True, regex=True)
         return self
 
     def to_csv(self, output_file: Union[str, Path]) -> None:
