@@ -123,14 +123,14 @@ class TestParsedContent(TestCase):
         # Case 2: content is Path or str (reading in file directly)
         path_file_source = Path("path", "to", "some.csv")
         test_instance = util.ParsedContent(path_file_source).load()
-        pandas_mock.read_csv.assert_called_with(path_file_source)
+        pandas_mock.read_csv.assert_called_with(path_file_source, index_col=0)
         self.assertEqual(test_instance._content, fake_df)
         pandas_mock.reset()
 
         # Case 3: content is str (reading in file directly)
         str_ile_source = "path/to/some/file.csv"
         test_instance = util.ParsedContent(str_ile_source).load()
-        pandas_mock.read_csv.assert_called_with(str_ile_source)
+        pandas_mock.read_csv.assert_called_with(str_ile_source, index_col=0)
         self.assertEqual(test_instance._content, fake_df)
         pandas_mock.reset()
 
