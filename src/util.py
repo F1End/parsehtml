@@ -66,7 +66,7 @@ class ParsedContent(Content):
         if isinstance(self._source, list):
             self._content = pd.DataFrame(self._source)
         elif isinstance(self._source, str) or isinstance(self._source, Path):
-            self._content = pd.read_csv(self._source)
+            self._content = pd.read_csv(self._source, index_col=0)
         else:
             raise TypeError(f"ParsedContent class supports only str, path and [list[dict]] sequence"
                             f" but received {type(self._source)}!")
